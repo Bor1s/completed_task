@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class CsvExporter
+  def self.transfer_and_import
+    service = DownloadFiles.new(endpoint: Settings.mraba_sftp_endpoint, user: Settings.mraba_sftp_user, keys: [Rails.application.secrets['some_secret']])
+    service.call
+    # TODO: continue in ImportFile#call with:
+    #     - Create file uploader, which will updaload broken file via SFTP somewhere
+  end
 end
 
 # require 'net/sftp'
