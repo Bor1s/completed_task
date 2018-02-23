@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-class ImportFiles
+class GetFilesMetadata
   REMOTE_CSV_DIR = '/data/files/csv'
   CSV = '.csv'
-  attr_reader :files, :settings
-  private :settings
 
-  def initialize(**settings)
-    @files = []
-    @settings = settings
+  attr_reader :sftp
+  private :sftp
+
+  def initialize(sftp)
+    @sftp = sftp
   end
 
   def call
@@ -25,14 +25,10 @@ class ImportFiles
 
   def start_sftp_import
     # TODO: User, endpoint and keys should be validated.
-    Net::SFTP.start(settings[:endpoint], settings[:user], keys: settings[:keys]) do |sftp|
+    Net::SFTP.start(sftp) do |sftp|
       # sftp_entries = sftp.dir.entries(REMOTE_CSV_DIR).map(&:name).sort
-      entries = sftp.dir.entries(REMOTE_CSV_DIR).select do |entry|
+      sftp.dir.entries(REMOTE_CSV_DIR).select do |entry|
         ends_with_csv?(entry.name) && contain_start_file?(sftp_entries, entry.name)
-      end
-
-      entries.each do |entry|
-        HandleEntry.new(entry).call
       end
     end
   end

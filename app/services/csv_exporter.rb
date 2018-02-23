@@ -2,10 +2,39 @@
 
 class CsvExporter
   def self.transfer_and_import
-    service = DownloadFiles.new(endpoint: Settings.mraba_sftp_endpoint, user: Settings.mraba_sftp_user, keys: [Rails.application.secrets['some_secret']])
-    service.call
-    # TODO: continue in ImportFile#call with:
-    #     - Create file uploader, which will updaload broken file via SFTP somewhere
+    sftp = { endpoint: Settings.mraba_sftp_endpoint, user: Settings.mraba_sftp_user, keys: [Rails.application.secrets['some_secret']] }
+    metadata = GetFilesMetadata.new(sftp).call
+    metadata.each do |entry|
+      file_path = DownloadFile.new(sftp, entry).call
+      importer = ImportFile.new(file_path)
+      importer.call
+
+      unless importer.success?
+        handle_error(entry, importer.error)
+        next
+      end
+
+      handle_success(entry, file_path)
+    end
+  end
+
+  # TODO: continue in ImportFile#call with:
+  #     - Create file uploader, which will updaload broken file via SFTP somewhere
+
+  private
+
+  class << self
+    # TODO: here should be some mechanism for optional sending mails
+    def handle_error(entry, message)
+      error_msg = "Import of the file #{entry} failed with errors: \n #{message}"
+      upload_error_file(entry, error_msg)
+      ApplicationMailer.send_import_feedback('Import CSV failed', error_msg)
+    end
+
+    def handle_success(entry, file_path)
+      File.delete(file_path)
+      ApplicationMailer.send_import_feedback("Successful Import. Import of the file #{entry} done.")
+    end
   end
 end
 
