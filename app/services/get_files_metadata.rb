@@ -24,9 +24,7 @@ class GetFilesMetadata
   end
 
   def start_sftp_import
-    # TODO: User, endpoint and keys should be validated.
-    Net::SFTP.start(sftp) do |sftp|
-      # sftp_entries = sftp.dir.entries(REMOTE_CSV_DIR).map(&:name).sort
+    Net::SFTP.start(sftp.endpoint, sftp.user, keys: sftp.keys) do |sftp|
       sftp.dir.entries(REMOTE_CSV_DIR).select do |entry|
         ends_with_csv?(entry.name) && contain_start_file?(sftp_entries, entry.name)
       end

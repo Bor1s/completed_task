@@ -1,39 +1,37 @@
 # frozen_string_literal: true
 
+# TODO: At the end of reworking - find a proper name for this class.
 class CsvExporter
-  def self.transfer_and_import
-    sftp = { endpoint: Settings.mraba_sftp_endpoint, user: Settings.mraba_sftp_user, keys: [Rails.application.secrets['some_secret']] }
-    metadata = GetFilesMetadata.new(sftp).call
-    metadata.each do |entry|
-      file_path = DownloadFile.new(sftp, entry).call
-      importer = ImportFile.new(file_path)
-      importer.call
+  class << self
+    def transfer_and_import
+      metadata = GetFilesMetadata.new(MrabaSftp).call
+      metadata.each do |entry|
+        file_path = DownloadFile.new(MrabaSftp, entry).call
+        importer = ImportFile.new(file_path)
+        importer.call
 
-      unless importer.success?
-        handle_error(entry, importer.error)
-        next
+        unless importer.success?
+          handle_error(entry, importer.error)
+          next
+        end
+
+        handle_success(entry, file_path)
       end
-
-      handle_success(entry, file_path)
     end
   end
-
-  # TODO: continue in ImportFile#call with:
-  #     - Create file uploader, which will updaload broken file via SFTP somewhere
 
   private
 
   class << self
-    # TODO: here should be some mechanism for optional sending mails
-    def handle_error(entry, message)
+    def handle_error(entry, message, send_mail = true)
       error_msg = "Import of the file #{entry} failed with errors: \n #{message}"
-      upload_error_file(entry, error_msg)
-      ApplicationMailer.send_import_feedback('Import CSV failed', error_msg)
+      UploadErrorFile.new(MrabaSftp, entry, error_msg).call
+      ApplicationMailer.send_import_feedback('Import CSV failed', error_msg) if send_mail
     end
 
-    def handle_success(entry, file_path)
+    def handle_success(entry, file_path, send_mail = true)
       File.delete(file_path)
-      ApplicationMailer.send_import_feedback("Successful Import. Import of the file #{entry} done.")
+      ApplicationMailer.send_import_feedback("Successful Import. Import of the file #{entry} done.") if send_mail
     end
   end
 end
