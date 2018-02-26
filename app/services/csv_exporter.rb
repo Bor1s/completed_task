@@ -11,7 +11,7 @@ class CsvExporter
         importer.call
 
         unless importer.success?
-          handle_error(entry, importer.error)
+          handle_error(entry, importer.errors.join("\n"))
           next
         end
 

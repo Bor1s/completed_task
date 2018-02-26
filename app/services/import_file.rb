@@ -1,41 +1,80 @@
 # frozen_string_literal: true
 
 class ImportFile
-  attr_reader :success, :file_path
-  private :success, :file_path
+  SOURCE_PATH = "#{Rails.root}/private/upload"
 
-  def initialize(file_path)
+  attr_reader :file_path, :errors, :activity_ids, :dtaus, :imported_rows
+  private :file_path, :path_and_name, :activity_ids, :dtaus, :imported_rows
+
+  def initialize(file_path, dtaus = Mraba::Transaction)
     @file_path = file_path
-    @success = true
+    @errors = []
+    @imported_rows = []
+    @path_and_name = "#{SOURCE_PATH}/csv/tmp_mraba/DTAUS#{Time.current.strftime('%Y%m%d_%H%M%S')}"
+    @dtaus = dtaus.define_dtaus('RS', 8_888_888_888, 99_999_999, 'Credit collection')
   end
 
   def call
-    # TODO: continue here debugging #import method in original CsvExporter
+    create_private_dirs
+    process_rows(read_csv)
+    dtaus.add_datei("#{path_and_name}_201_mraba.csv") if success?
+  rescue StandardError => e
+    add_error(e.message)
+  end
+
+  private
+
+  def read_csv
+    CSV.read(file_path, col_sep: ';', headers: true, skip_blanks: true).map do |r|
+      data = r.to_hash
+      [data['ACTIVITY_ID'], data] if data['ACTIVITY_ID'].present?
+    end.compact
+  end
+
+  def process_rows(rows)
+    rows.each do |row|
+      if row_valid?(row)
+        strategy = FindStrategy.new(transaction_type(row), row, dtaus).call
+        strategy.add
+        strategy.success? ? add_imported_rows(row['ACTIVITY_ID']) : add_error(strategy.errors)
+      else
+        add_error("#{row['ACTIVITY_ID']}: UMSATZ_KEY #{row['UMSATZ_KEY']} is not allowed")
+      end
+    end
+  end
+
+  def create_private_dirs
+    FileUtils.mkdir_p "#{SOURCE_PATH}/csv"
+    FileUtils.mkdir_p "#{SOURCE_PATH}/csv/tmp_mraba"
+  end
+
+  def row_valid?(row)
+    %(10 16).include?(row['UMSATZ_KEY'])
+  end
+
+  def add_imported_rows(activity_id)
+    @imported_rows << activity_id
+  end
+
+  def add_error(message)
+    @errors << message
   end
 
   def success?
-    success == 'Success'
+    errors.empty?
   end
 
-  def error
-    # TODO: here goes error message if any
+  def errors
+    @errors.flatten
   end
 
-  #   def self.import(file, validation_only = false)
-  #     begin
-  #       result = import_file(file, validation_only)
-  #     rescue => e
-  #       result = { :errors => [e.to_s], :success => ['data lost'] }
-  #     end
-  #
-  #     if result[:errors].blank?
-  #       result = "Success"
-  #     else
-  #       result = "Imported: #{result[:success].join(', ')} Errors: #{result[:errors].join('; ')}"
-  #     end
-  #
-  #     Rails.logger.info "CsvExporter#import time: #{Time.now.to_formatted_s(:db)} Imported #{file}: #{result}"
-  #
-  #     result
-  #   end
+  def transaction_type(row)
+    if (row['SENDER_BLZ'] == '00000000') && (row['RECEIVER_BLZ'] == '00000000')
+      'account_transfer'
+    elsif (row['SENDER_BLZ'] == '00000000') && (row['UMSATZ_KEY'] == '10')
+      'bank_transfer'
+    elsif (row['RECEIVER_BLZ'] == '70022200') && ['16'].include?(row['UMSATZ_KEY'])
+      'lastschrift'
+    end
+  end
 end
