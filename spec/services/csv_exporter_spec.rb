@@ -21,13 +21,13 @@ RSpec.describe CsvExporter, type: :service do
       described_class.transfer_and_import
     end
 
-    it 'calls DownloadFile for each metadata entry' do
+    it 'calls DownloadFile#call for each metadata entry' do
       expect_any_instance_of(DownloadFile).to receive(:call).once
 
       described_class.transfer_and_import
     end
 
-    it 'calls ImportFile for each metadata entry' do
+    it 'calls ImportFile#call for each metadata entry' do
       expect_any_instance_of(ImportFile).to receive(:call).once
 
       described_class.transfer_and_import

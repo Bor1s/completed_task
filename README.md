@@ -1,24 +1,23 @@
 # README
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## Overview
 
-Things you may want to cover:
+### What is done
 
-* Ruby version
+1. Initial app was moved into small API only Rails application. `CsvExporter` was reimplemented in a `/services` folder and can be run via rake task `mraba:import`.
+2. `CsvExporter` was broken down into small testable services.
+3. Specs were written for a majority components (I left some specs behind intentionally due to lack of time. This task already turned out to be more time consuming than I expected).
+4. OOD and some refactoring techniques were used here as much as I could.
+5. Some places have comments wich I left to indicate weak places or places which require much more time to refactor.
 
-* System dependencies
+### What can still be improved
 
-* Configuration
+1. Strategies have #add method which contains old logic from test assignment. They must be refactored. Didn't really touch that logic. (Need time)
+2. Rubocop warning should be given more love. Now there are plenty of them and some can be skipped. (Need time)
+3. More specs should be wirtten especially for strategies. (Need time)
 
-* Database creation
+### To run
 
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+1. `bundle install`
+2. `rails db:migrate`
+3. `rspec spec/`
