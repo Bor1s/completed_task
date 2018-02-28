@@ -8,6 +8,7 @@ class Lastschrift
     @row = row
     @validation_only = validation_only
     @dtaus = dtaus
+    @errors = []
   end
 
   def errors

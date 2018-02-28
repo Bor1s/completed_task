@@ -47,5 +47,42 @@ RSpec.describe ImportFile, type: :service do
         end
       end
     end
+
+    context 'when data is valid for' do
+      let(:total_valid_rows_in_test_csv) { 5 }
+
+      context 'account transfer' do
+        let(:mraba) { instance_double(Mraba::Transaction) }
+        let(:file_path) { Rails.root.join('spec', 'fixtures', 'data_valid.csv') }
+        let(:account) { spy('account', present?: true) }
+        subject { described_class.new(file_path, mraba) }
+
+        before do
+          allow(Account).to receive(:find_by_account_no).and_return(account)
+          allow(mraba).to receive(:add_datei)
+        end
+
+        it 'returns success' do
+          subject.call
+
+          expect(subject.success?).to be true
+          expect(subject.imported_rows.count).to eq total_valid_rows_in_test_csv
+        end
+
+        it 'sets date to dtaus' do
+          expect(mraba).to receive(:add_datei).once
+
+          subject.call
+        end
+      end
+
+      context 'bank transfer' do
+        # TODO: Here should go similar tests for BankTransfer
+      end
+
+      context 'lastschrift' do
+        # TODO: Here should go similar tests for Lastschrift
+      end
+    end
   end
 end

@@ -6,14 +6,14 @@ class ImportFile
   SOURCE_PATH = "#{Rails.root}/private/upload"
 
   attr_reader :file_path, :path_and_name, :activity_ids, :dtaus, :imported_rows
-  private :file_path, :path_and_name, :activity_ids, :dtaus, :imported_rows
+  private :file_path, :path_and_name, :activity_ids, :dtaus
 
-  def initialize(file_path, dtaus = Mraba::Transaction)
+  def initialize(file_path, dtaus = nil)
     @file_path = file_path
     @errors = []
     @imported_rows = []
     @path_and_name = "#{SOURCE_PATH}/csv/tmp_mraba/DTAUS#{Time.current.strftime('%Y%m%d_%H%M%S')}"
-    @dtaus = dtaus.define_dtaus('RS', 8_888_888_888, 99_999_999, 'Credit collection')
+    @dtaus = dtaus || Mraba::Transaction.define_dtaus('RS', 8_888_888_888, 99_999_999, 'Credit collection')
   end
 
   def success?

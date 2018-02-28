@@ -8,6 +8,7 @@ class AccountTransfer
     @row = row
     @dtaus = dtaus
     @validation_only = validation_only
+    @errors = []
   end
 
   def success?
@@ -19,6 +20,7 @@ class AccountTransfer
   end
 
   def add
+    # TODO: should be properly refactored.
     sender = get_sender(row)
     return unless sender
 
@@ -47,7 +49,7 @@ class AccountTransfer
 
   def get_sender(row)
     sender = Account.find_by_account_no(row['SENDER_KONTO'])
-    add_error("#{row['ACTIVITY_ID']}: Account #{row['SENDER_KONTO']} not found") if sender.blank?
+    add_error("#{row['ACTIVITY_ID']}: Account #{row['SENDER_KONTO']} not found") unless sender.present?
     sender
   end
 

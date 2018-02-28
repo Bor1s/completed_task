@@ -8,6 +8,7 @@ class BankTransfer
     @row = row
     @dtaus = dtaus
     @validation_only = validation_only
+    @errors = []
   end
 
   def success?
