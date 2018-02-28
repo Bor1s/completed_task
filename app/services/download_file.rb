@@ -13,9 +13,11 @@ class DownloadFile
   end
 
   def call
-    Net::SFTP.start(sftp) do |sftp|
+    Net::SFTP.start(sftp.endpoint, sftp.user, keys: sftp.keys) do |sftp|
       sftp.download!(remote_file, local_file)
       sftp.remove!(remote_file)
     end
+
+    local_file
   end
 end

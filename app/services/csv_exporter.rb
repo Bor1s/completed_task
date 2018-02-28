@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
-# TODO: At the end of reworking - find a proper name for this class.
+# NOTE: I decided to keep the same name for
+# CsvExporter and #transfer_and_import metod
+# for bakwards compatibility
+# but personally I would rename it to
+# something more suitable, like ImportTransactionData.call
 class CsvExporter
   class << self
     def transfer_and_import

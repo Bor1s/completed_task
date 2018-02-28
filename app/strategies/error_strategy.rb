@@ -5,6 +5,7 @@ class ErrorStrategy
   private :row, :validation_only
 
   def initialize(row, dtaus, validation_only = false)
+    @errors = []
     @row = row
     @dtaus = dtaus
     @validation_only = validation_only

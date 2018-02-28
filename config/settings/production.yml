@@ -1,2 +1,3 @@
-mraba_sftp_endpoint: 'csv.example.com/endpoint/'
-mraba_sftp_user: 'some_user'
+mraba_sftp:
+  endpoint: 'csv.example.com/endpoint/'
+  user: 'some_user'

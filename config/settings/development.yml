@@ -1,3 +1,4 @@
-mraba_sftp_endpoint: 0.0.0.0:2020
-mraba_sftp_user: 'some_user'
+mraba_sftp:
+  endpoint: 0.0.0.0:2020
+  user: 'some_user'
 

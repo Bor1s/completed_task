@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require 'csv'
+
 class ImportFile
   SOURCE_PATH = "#{Rails.root}/private/upload"
 
-  attr_reader :file_path, :errors, :activity_ids, :dtaus, :imported_rows
+  attr_reader :file_path, :path_and_name, :activity_ids, :dtaus, :imported_rows
   private :file_path, :path_and_name, :activity_ids, :dtaus, :imported_rows
 
   def initialize(file_path, dtaus = Mraba::Transaction)
@@ -14,20 +16,28 @@ class ImportFile
     @dtaus = dtaus.define_dtaus('RS', 8_888_888_888, 99_999_999, 'Credit collection')
   end
 
+  def success?
+    errors.empty?
+  end
+
+  def errors
+    @errors.flatten
+  end
+
   def call
     create_private_dirs
     process_rows(read_csv)
     dtaus.add_datei("#{path_and_name}_201_mraba.csv") if success?
   rescue StandardError => e
-    add_error(e.message)
+    add_error("#{e.message}\n#{e.backtrace}")
   end
 
   private
 
   def read_csv
-    CSV.read(file_path, col_sep: ';', headers: true, skip_blanks: true).map do |r|
-      data = r.to_hash
-      [data['ACTIVITY_ID'], data] if data['ACTIVITY_ID'].present?
+    CSV.read(file_path, col_sep: ';', headers: true, skip_blanks: true).map do |row|
+      data = row.to_hash
+      data if data['ACTIVITY_ID'].present?
     end.compact
   end
 
@@ -58,14 +68,6 @@ class ImportFile
 
   def add_error(message)
     @errors << message
-  end
-
-  def success?
-    errors.empty?
-  end
-
-  def errors
-    @errors.flatten
   end
 
   def transaction_type(row)

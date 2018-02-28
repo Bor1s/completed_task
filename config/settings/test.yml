@@ -1,0 +1,3 @@
+mraba_sftp:
+  endpoint: 'test_endpoint'
+  user: 'test_username'
